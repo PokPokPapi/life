@@ -1,0 +1,77 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Horizons</title><link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;800&amp;display=swap" rel="stylesheet"><link rel="stylesheet" href="c.css"><script src="lib.js"></script></head><body class="p-horizons">
+<div class="nt">
+<main class="main">
+<div class="cover">
+<div class="lab">Horizons<br>Condo au Québec · Suisse</div>
+<div class="big">04</div>
+</div>
+<div class="page">
+<div class="icon"><i></i></div>
+<h1 class="t">Horizons</h1>
+<div class="props"><span>Court terme <b>formation, dettes</b></span><span>Moyen terme <b>condo avec Chloé</b></span><span>Long terme <b>Suisse, environ 10 ans</b></span></div>
+<h2>Dix ans, une ligne</h2>
+<div class="hint">Base Jalons · vue Chronologie · la barre rouge marque aujourd’hui</div>
+<div class="scroll">
+<div class="tl">
+<div class="ax"><div></div><div class="yrs" id="yrs"></div></div>
+<div id="tl"></div>
+</div>
+</div>
+<p class="hint">Les dates longues sont des hypothèses. Chaque jalon a une case « confiance » : ferme, probable, rêve.</p>
+<h2>Condo au Québec</h2>
+<div class="cols" style="margin-top: 14px">
+<div class="kpi"><div class="k">Horizon</div><div class="v">≈ 2029</div><div class="s">Entre 2 et 4 ans</div></div>
+<div class="kpi"><div class="k">Mise de fonds visée</div><div class="v">— CAD</div><div class="s">À fixer à deux</div></div>
+<div class="kpi"><div class="k">CELIAPP</div><div class="v">2 comptes</div><div class="s">8 000 CAD par an chacun</div></div>
+<div class="kpi"><div class="k">Rendement visé</div><div class="v">8 %</div><div class="s">Laisser fructifier</div></div>
+</div>
+<div class="cols" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px; margin-top: 24px">
+<div style="border-top: 1px solid #111111">
+<label class="chk"><input type="checkbox" disabled><span>Chloé ouvre son CELIAPP</span><span class="x">nov. 2026</span></label>
+<label class="chk"><input type="checkbox" disabled><span>Ouvrir mon CELIAPP · Wealthsimple</span><span class="x">à faire</span></label>
+<label class="chk"><input type="checkbox" disabled><span>Fixer la cotisation automatique par paie</span><span class="x"></span></label>
+<label class="chk"><input type="checkbox" disabled><span>Choisir 3 quartiers</span><span class="x"></span></label>
+<label class="chk"><input type="checkbox" disabled><span>Préapprobation hypothécaire</span><span class="x">6 mois avant</span></label>
+</div>
+<div class="co"><span class="m"></span><div><b>Étape possible avant.</b> Un 2½ ou 3½ récent au centre-ville de Montréal, environ 1 600 à 1 700 CAD par mois à deux. Exploration seulement. La page Montréal garde les annonces vues et les quartiers notés.</div></div>
+</div>
+<h2>Suisse</h2>
+<div class="hint">Ton Simulateur AC vers SWISS · étape où tu en es</div>
+<div class="emb">
+<div class="bar"><span>Simulateur AC vers SWISS</span><span>Embed</span></div>
+<div class="sim">
+<div class="ph"><b></b>Heures PIC</div>
+<div class="n">10</div>
+<div class="ti">Louer 100 h comme commandant</div>
+<div class="seg" aria-hidden="true"><i class="on"></i><i class="cur"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+</div>
+</div>
+<div class="cols" style="margin-top: 24px">
+<div class="kpi"><div class="k">Cible</div><div class="v">ZRH · GVA</div><div class="s">SWISS ou easyJet Switzerland</div></div>
+<div class="kpi"><div class="k">Nationalité</div><div class="v">Suisse</div><div class="s">Aucun permis de travail</div></div>
+<div class="kpi"><div class="k">Licence</div><div class="v">EASA</div><div class="s">Conversion via le BAZL</div></div>
+<div class="kpi"><div class="k">Langue</div><div class="v">B2</div><div class="s">Allemand si SWISS</div></div>
+</div>
+<div class="co" style="margin-top: 24px"><span class="m"></span><div>Rien à faire pour la Suisse cette année, sauf une chose : loguer chaque heure de commandant de bord avec soin. Le reste attend son tour dans la base Jalons.</div></div>
+</div>
+</main>
+</div>
+<script>
+__run(function () {
+const Y0 = new Date("2026-01-01T00:00:00"), Y1 = new Date("2037-01-01T00:00:00"), span = Y1 - Y0;
+const P = (d) => Math.max(0, Math.min(100, ((d - Y0) / span) * 100));
+let y = ""; for (let i = 2026; i <= 2036; i++) y += `<span>${i}</span>`; set("yrs", y);
+const now = P(TODAY);
+const js = rows("jalons").sort((a, b) => n0(a.Ordre) - n0(b.Ordre));
+set("tl", js.map((j) => {
+const s = dt(j["Période"]); if (!s) return "";
+const e = j["Période"].end ? dt({ start: j["Période"].end }) : s;
+const l = P(s), w = Math.max(0.8, P(e) - l);
+const red = (j.Sphère || []).includes("Suisse") && j.Horizon === "Long terme" || l <= now && P(e) >= now;
+const sub = [j["Détail"] && j["Détail"].length < 40 ? j["Détail"] : "", j.Confiance].filter(Boolean).join(" · ");
+return `<div class="row"><div class="lb">${esc(j.Jalon)}${j.Fait ? " ✓" : ""}<span>${esc(sub)}</span></div><div class="track"><i${red ? ' class="red"' : ""} style="left: ${l.toFixed(2)}%; width: ${w.toFixed(2)}%"></i><b style="left: ${now.toFixed(2)}%"></b></div></div>`;
+}).join(""));
+});
+</script>
+
+</body></html>

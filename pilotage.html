@@ -1,0 +1,103 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Pilotage</title><link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;800&amp;display=swap" rel="stylesheet"><link rel="stylesheet" href="c.css"><script src="lib.js"></script></head><body class="p-pilotage">
+<div class="nt">
+<main class="main">
+<div class="cover">
+<div class="lab">Pilotage<br>CPL · IFR Groupe 1 · Cargair Mirabel</div>
+<div class="big">02</div>
+</div>
+<div class="page">
+<div class="icon"><i></i></div>
+<h1 class="t">Pilotage</h1>
+<div class="props"><span>Formation <b>modulaire · Cargair</b></span><span>Bases <b>CYMX · CSE4</b></span><span>Avions <b>C172 · PA-28-140 C-GNIV</b></span><span>Fin visée <b id="finProp">juin 2027</b></span></div>
+<div class="cols" style="margin-top: 28px" id="kpis"></div>
+<h2>Exigences CPL restantes</h2>
+<div class="hint">Base Exigences · Fait = heures avant Notion + somme des vols liés · cibles RAC 421.30, le PTR Cargair prévaut</div>
+<div class="scroll">
+<table class="tb">
+<thead><tr><th>Exigence</th><th class="r">Cible</th><th class="r">Fait</th><th class="r">Reste</th><th>Progrès</th><th>Source</th></tr></thead>
+<tbody id="ex"></tbody>
+</table>
+</div>
+<p class="hint" id="exHint"></p>
+<h2>Étapes</h2>
+<div class="hint">Base Étapes · vue Tableau</div>
+<div class="scroll" style="margin-top: 8px"><div class="board" id="board"></div></div>
+<h2>Carnet de vol</h2>
+<div class="vh" style="margin: 0"><span class="on">Récents</span><span>Ce mois</span><span>Voyage</span><span>Par avion</span></div>
+<div class="scroll">
+<table class="tb">
+<thead><tr><th>Date</th><th>Avion</th><th>Trajet</th><th class="r">Durée</th><th class="r">PIC</th><th class="r">Voyage</th><th class="r">Nuit</th><th class="r">Inst.</th><th>Remarque</th></tr></thead>
+<tbody id="vols"></tbody>
+</table>
+</div>
+<div class="cols" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px">
+<section>
+<h2>Heures par mois</h2>
+<div class="hint">Base Vols · six derniers mois</div>
+<div id="chart" style="margin-top: 12px"></div>
+</section>
+<section>
+<h2>Coûts de formation</h2>
+<div class="hint">Base Coûts de formation · reliée aux Transactions de Finances</div>
+<div class="scroll">
+<table class="tb" style="min-width: 320px">
+<thead><tr><th>Poste</th><th class="r">Payé</th><th class="r">Prévu</th></tr></thead>
+<tbody id="couts"></tbody>
+</table>
+</div>
+</section>
+</div>
+<h2>Feuille de route EASA · Suisse</h2>
+<div class="hint">Le détail vit dans Horizons</div>
+<div class="ph11" aria-hidden="true"><i class="cur"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+<div class="phl"><span style="color: #DA291C">Audit</span><span>Heures PIC</span><span>Médical</span><span>Langues</span><span>Théorie ATPL</span><span>Conversion</span><span>Exigences</span><span>Candidature</span><span>Départ</span><span>Installation</span><span>Formation</span></div>
+<div class="co" style="margin-top: 20px"><span class="m"></span><div>Ce qui compte dès maintenant : chaque heure de commandant de bord loguée. L’EASA en demande 250 avant la conversion. <a target="_blank" rel="noopener" href="https://www.notion.so/4171ea2c4b2381b4b5ead1e864301cda">Voir Horizons</a></div></div>
+</div>
+</main>
+</div>
+<script>
+__run(function () {
+const ex = rows("exigences").sort((a, b) => n0(a.Ordre) - n0(b.Ordre));
+const tt = ex.find((e) => e.Champ === "Durée") || {};
+const vols = rows("vols").filter((v) => dt(v.Date)).sort((a, b) => dt(b.Date) - dt(a.Date));
+const et = rows("etapes").sort((a, b) => n0(a.Ordre) - n0(b.Ordre));
+const fin = et.filter((e) => e.Date && e.Statut !== "Fait").sort((a, b) => dt(b.Date) - dt(a.Date))[0];
+const sumBloc = vols.reduce((s, v) => s + n0(v["Durée"]), 0);
+const months = fin ? Math.max(0, Math.round((dt(fin.Date) - TODAY) / (30.44 * 864e5))) : null;
+if (fin) set("finProp", dMonthYear(fin.Date));
+const p = n0(tt.Fait) / (n0(tt.Cible) || 1);
+set("kpis", `
+<div class="kpi"><div class="k">Temps total</div><div class="v">${fmt(tt.Fait)} / ${fmt(tt.Cible)} h</div>${barHtml(p, pct(p))}</div>
+<div class="kpi"><div class="k">Vols saisis dans Notion</div><div class="v">${fmt(sumBloc, 1)} h</div><div class="s">${vols.length} vol${vols.length > 1 ? "s" : ""} · bloc de 100 h</div></div>
+<div class="kpi"><div class="k">Fin de formation</div><div class="v">${fin ? dMonthYear(fin.Date) : "—"}</div><div class="s">${months !== null ? "Dans " + months + " mois" : ""}</div></div>
+<div class="kpi"><div class="k">Premier emploi</div><div class="v">fin 2027</div><div class="s">Six mois après la fin</div></div>`);
+set("ex", ex.map((e) => {
+const c = num(e.Cible), f = n0(e.Fait);
+const pr = c ? f / c : 0;
+const st = e.Statut;
+const prog = c === null ? tag("selon PTR") : st === "À planifier" ? tag("à planifier", "red") : barHtml(pr, pct(pr));
+return `<tr><td><b>${esc(e.Exigence)}</b></td><td class="r">${c === null ? tag("selon PTR") : fmt(c) + " " + esc(e["Unité"] || "")}</td><td class="r">${st === "À importer" && !f ? tag("import") : fmt(f, f % 1 ? 1 : 0) + " " + esc(e["Unité"] || "")}</td><td class="r">${c === null ? "" : fmt(e.Reste, 0) + " " + esc(e["Unité"] || "")}</td><td>${prog}</td><td>${esc(e.Source)}</td></tr>`;
+}).join(""));
+set("exHint", ex.some((e) => e.Statut === "À importer") ? "« import » : se remplit au premier import CSV ForeFlight dans la base Vols." : "");
+const cols = ["Fait", "En cours", "À faire"];
+set("board", cols.map((c) => {
+const its = et.filter((e) => e.Statut === c);
+return `<div class="bc"><div class="h"><span>${c}</span><span>${its.length}</span></div>${its.map((e) => `<div class="it"${c === "En cours" && e === its[0] ? ' style="border-color: #DA291C"' : ""}><b>${esc(e["Étape"])}</b><div class="ln">${esc(e["Détail"])}</div></div>`).join("")}</div>`;
+}).join(""));
+const f1 = (v) => (num(v) === null ? "—" : fmt(v, 1));
+set("vols", vols.length ? vols.slice(0, 8).map((v) => `<tr><td>${dShort(v.Date)}</td><td>${esc(v.Avion)}</td><td>${esc(v.Trajet)}</td><td class="r">${f1(v["Durée"])}</td><td class="r">${f1(v.PIC)}</td><td class="r">${f1(v.Voyage)}</td><td class="r">${f1(v.Nuit)}</td><td class="r">${f1(v["Inst."])}</td><td>${esc(v.Remarque)}</td></tr>`).join("") : `<tr><td colspan="9" class="hint">Aucun vol encore. Importe ton CSV ForeFlight dans la base Vols ci-dessous.</td></tr>`);
+const ms = [];
+for (let i = 5; i >= 0; i--) { const d = new Date(TODAY.getFullYear(), TODAY.getMonth() - i, 1); ms.push({ y: d.getFullYear(), m: d.getMonth(), h: 0 }); }
+vols.forEach((v) => { const d = dt(v.Date); const o = ms.find((x) => x.y === d.getFullYear() && x.m === d.getMonth()); if (o) o.h += n0(v["Durée"]); });
+const mx = Math.max(1, ...ms.map((x) => x.h));
+set("chart", `<svg viewBox="0 0 440 180" role="img" aria-label="Heures de vol par mois" style="width: 100%">
+<line x1="0" y1="150" x2="440" y2="150" stroke="#111"></line>
+${ms.map((x, i) => { const hh = (x.h / mx) * 120; const last = i === 5; return `<rect x="${10 + i * 72}" y="${150 - hh}" width="52" height="${hh}" fill="${last ? "#DA291C" : "#111"}"></rect>${x.h ? `<text x="${36 + i * 72}" y="${144 - hh}" font-size="11" fill="#111" text-anchor="middle">${fmt(x.h, 1)}</text>` : ""}<text x="${36 + i * 72}" y="168" font-size="11" fill="${last ? "#DA291C" : "#6B6B6B"}" text-anchor="middle">${MOIS[x.m]}</text>`; }).join("")}
+</svg>${vols.length ? "" : '<p class="hint">Le graphique se remplit avec les vols saisis.</p>'}`);
+const cs = rows("couts");
+const tot = cs.reduce((s, c) => s + n0(c["Payé"]), 0);
+set("couts", cs.map((c) => `<tr><td>${esc(c.Poste)}${c["Reçu fiscal"] ? " " + tag(c["Reçu fiscal"]) : ""}</td><td class="r">${num(c["Payé"]) === null ? "—" : fmt(c["Payé"])}</td><td class="r">${num(c["Prévu"]) === null ? "—" : fmt(c["Prévu"])}</td></tr>`).join("") + `<tr class="t"><td>Total payé</td><td class="r">${fmt(tot)}</td><td class="r"></td></tr>`);
+});
+</script>
+
+</body></html>

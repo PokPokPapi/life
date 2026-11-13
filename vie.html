@@ -1,0 +1,78 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Vie</title><link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;800&amp;display=swap" rel="stylesheet"><link rel="stylesheet" href="c.css"><script src="lib.js"></script></head><body class="p-vie">
+<div class="nt">
+<main class="main">
+<div class="cover">
+<div class="lab">Vie<br>Chloé · code · maison et auto · voyages · papiers</div>
+<div class="big">05</div>
+</div>
+<div class="page">
+<div class="icon"><i></i></div>
+<h1 class="t">Vie</h1>
+<nav class="jump" aria-label="Sections">
+<a href="#couple">Chloé</a><a href="#code">Projets code</a><a href="#maison">Maison et auto</a><a href="#voyages">Voyages</a><a href="#admin">Administratif</a>
+</nav>
+<h2 id="couple">Chloé <small>Base Idées · filtre Couple · vue Galerie</small></h2>
+<div class="hint" id="coupleHint"></div>
+<div class="gal" id="idees"></div>
+<p class="hint">Chaque idée garde coût, saison, note après coup. Les dates choisies vont dans l’Agenda.</p>
+<h2 id="code">Projets code <small>Base Projets · vue Tableau</small></h2>
+<div class="scroll"><div class="board" id="projets"></div></div>
+<p class="hint">Chaque carte ouvre une page : objectif, prochaine action, lien repo, notes.</p>
+<div class="cols" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px">
+<section>
+<h2 id="maison">Maison et auto</h2>
+<div class="scroll">
+<table class="tb" style="min-width: 320px">
+<thead><tr><th>Élément</th><th>Prochaine action</th><th>Échéance</th></tr></thead>
+<tbody id="maisonT"></tbody>
+</table>
+</div>
+</section>
+<section>
+<h2 id="voyages">Voyages</h2>
+<div class="scroll">
+<table class="tb" style="min-width: 320px">
+<thead><tr><th>Quand</th><th>Où</th><th>Type</th></tr></thead>
+<tbody id="voyagesT"></tbody>
+</table>
+</div>
+<p class="hint">Chaque voyage : vols, budget lié à Finances, liste de bagages en modèle.</p>
+</section>
+</div>
+<h2 id="admin">Administratif <small>Base Documents · nommés selon ta nomenclature</small></h2>
+<div class="scroll">
+<table class="tb">
+<thead><tr><th>Document</th><th>Catégorie</th><th>Expire</th><th class="r">Jours restants</th></tr></thead>
+<tbody id="docs"></tbody>
+</table>
+</div>
+<div class="co" style="margin-top: 16px"><span class="m"></span><div>Moins de 60 jours avant une échéance : la ligne passe en rouge. Le rappel lui-même reste dans Rappels.</div></div>
+</div>
+</main>
+</div>
+<script>
+__run(function () {
+const ide = rows("idees").filter((i) => !i.Type || i.Type === "Couple").sort((a, b) => (a.Statut === "Fait") - (b.Statut === "Fait"));
+const todo = ide.filter((i) => i.Statut !== "Fait").length;
+set("coupleHint", `${todo} idée${todo > 1 ? "s" : ""} à faire · ${ide.length - todo} faite${ide.length - todo > 1 ? "s" : ""}`);
+set("idees", ide.map((i, k) => `<div class="idea"><div class="cv${k === 0 ? " ink" : ""}"><i></i></div><div class="bd"><b>${esc(i["Idée"])}</b><div class="ln">${esc(i["Détail"])}</div><div style="margin-top: 6px">${tag(i.Statut, i.Statut === "Fait" ? "" : "red")} ${(i["Étiquettes"] || []).map((t) => tag(t)).join(" ")}${num(i["Coût estimé"]) !== null ? " " + tag(cad(i["Coût estimé"])) : ""}${i["Date prévue"] ? " " + tag(dShort(i["Date prévue"]), "ink") : ""}</div></div></div>`).join(""));
+const pr = rows("projets");
+const cols = ["Idée", "En cours", "En pause", "Livré"];
+set("projets", cols.map((c) => {
+const its = pr.filter((p) => p.Statut === c);
+return `<div class="bc"><div class="h"><span>${c}</span><span>${its.length}</span></div>${its.map((p) => `<div class="it"><b>${esc(p.Projet)}</b><div class="ln">${esc(p.Description)}${p["Prochaine action"] ? " · " + esc(p["Prochaine action"]) : ""}</div></div>`).join("")}</div>`;
+}).join(""));
+const ms = rows("maison").sort((a, b) => (dt(a["Échéance"]) || 9e15) - (dt(b["Échéance"]) || 9e15));
+set("maisonT", ms.map((m) => `<tr><td><b>${esc(m["Élément"])}</b></td><td>${esc(m.Action)}</td><td>${m["Échéance"] ? (days(m["Échéance"]) < 30 ? `<span class="tag red">${dLong(m["Échéance"])}</span>` : dLong(m["Échéance"])) : m.Statut === "À planifier" || /saisir/.test(m.Note || "") ? tag(m.Statut === "À planifier" ? "à planifier" : "à saisir") : esc(m.Statut)}</td></tr>`).join(""));
+const vs = rows("voyages").sort((a, b) => (dt(a.Quand) || 9e15) - (dt(b.Quand) || 9e15));
+const q = (v) => { const s = dt(v.Quand); if (!s) return "—"; const e = v.Quand.end ? dt({ start: v.Quand.end }) : s; const M = (d) => MOISL[d.getMonth()][0].toUpperCase() + MOIS[d.getMonth()].slice(1); return s.getMonth() === e.getMonth() ? M(s) + " " + s.getFullYear() : M(s) + "–" + MOIS[e.getMonth()] + " " + e.getFullYear(); };
+set("voyagesT", vs.map((v) => `<tr><td>${q(v)}</td><td>${esc(v.Destination)}</td><td>${v.Statut === "Idée" ? tag(v.Note || "à choisir", "red") : tag(v.Type)}</td></tr>`).join(""));
+const ds = rows("documents").sort((a, b) => (dt(a.Expire) || 9e15) - (dt(b.Expire) || 9e15));
+set("docs", ds.map((d) => {
+const left = d.Expire ? days(d.Expire) : null;
+return `<tr><td class="file">${esc(d.Document)}.pdf</td><td>${tag(d["Catégorie"])}</td><td>${d.Expire ? dLong(d.Expire) : /saisir/.test(d.Note || "") ? tag("à saisir") : ""}</td><td class="r"${left !== null && left < 60 ? ' style="color: #DA291C"' : ""}>${left === null ? (/saisir/.test(d.Note || "") ? "—" : "") : fmt(left)}</td></tr>`;
+}).join(""));
+});
+</script>
+
+</body></html>

@@ -1,0 +1,94 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Accueil</title><link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;800&amp;display=swap" rel="stylesheet"><link rel="stylesheet" href="c.css"><script src="lib.js"></script></head><body class="p-accueil">
+<div class="nt">
+<main class="main">
+<div class="cover" style="background: #111111; color: #FFFFFF">
+<div class="lab">Camilo<br><span style="color: #9C9C9C">Une seule page pour tout le reste</span></div>
+<div class="big">Camilo<span style="color: #DA291C">.</span></div>
+</div>
+<div class="page">
+<div class="icon"><i></i></div>
+<h1 class="t">Accueil</h1>
+<div class="props" id="props"></div>
+<div class="cols" style="margin-top: 28px" id="kpis"></div>
+<div class="cols" style="margin-top: 36px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px">
+<section>
+<h2 style="margin-top: 0">Aujourd’hui</h2>
+<div class="hint">Base Journal · la page du jour</div>
+<div style="margin-top: 8px; border-top: 1px solid #111111" id="today"></div>
+</section>
+<section>
+<h2 style="margin-top: 0">Saisir</h2>
+<div class="hint">Ouvre la page Saisie : chaque bouton crée une ligne dans la bonne base</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px">
+<a class="btn" target="_blank" rel="noopener" href="https://www.notion.so/4171ea2c4b2381379372cc949bd4548c"><b>+</b>Dépense</a>
+<a class="btn" target="_blank" rel="noopener" href="https://www.notion.so/4171ea2c4b2381379372cc949bd4548c"><b>+</b>Repas</a>
+<a class="btn" target="_blank" rel="noopener" href="https://www.notion.so/4171ea2c4b2381379372cc949bd4548c"><b>+</b>Séance</a>
+<a class="btn" target="_blank" rel="noopener" href="https://www.notion.so/4171ea2c4b2381379372cc949bd4548c"><b>+</b>Vol</a>
+<a class="btn" target="_blank" rel="noopener" href="https://www.notion.so/4171ea2c4b2381379372cc949bd4548c"><b>+</b>Poids</a>
+<a class="btn" target="_blank" rel="noopener" href="https://www.notion.so/4171ea2c4b2381379372cc949bd4548c"><b>+</b>Idée</a>
+</div>
+<div class="co" style="margin-top: 20px"><span class="m"></span><div>Rappels reste dans Rappels. Ici, ce qui se mesure et ce qui se planifie.</div></div>
+</section>
+</div>
+<h2>Sphères</h2>
+<div class="hint">Une carte par page</div>
+<div class="gal" id="gal"></div>
+<h2>Cette semaine</h2>
+<div class="hint">Base Agenda · quarts AC, vols, séances, dates</div>
+<div class="scroll"><div class="week" id="week"></div></div>
+<p class="hint" style="margin-top: 10px" id="weekHint"></p>
+</div>
+</main>
+</div>
+<script>
+__run(function () {
+const budget = rows("budget"), dettes = rows("dettes"), resume = rows("resume")[0] || {};
+const reste = budget.reduce((s, b) => s + n0(b["Net mensuel"]), 0);
+const paies = rows("paies").filter((p) => dt(p.Date) && days(p.Date) >= 0).sort((a, b) => dt(a.Date) - dt(b.Date));
+const ex = rows("exigences").sort((a, b) => n0(a.Ordre) - n0(b.Ordre));
+const tt = ex.find((e) => e.Champ === "Durée") || ex[0] || {};
+const j = rows("journal").filter((x) => dt(x.Date)).sort((a, b) => dt(b.Date) - dt(a.Date));
+const iso = TODAY.toISOString().slice(0, 10);
+const today = j.find((x) => x.Date.start.slice(0, 10) === iso);
+const week = j.filter((x) => days(x.Date) > -7 && days(x.Date) <= 0);
+const hab = week.reduce((s, x) => s + n0(x.Habitudes), 0);
+const kcal = today ? n0(today.kcal) : 0;
+const next = paies[0];
+set("props", `<span>Aujourd’hui <b>${JOURS[TODAY.getDay()].replace(".", "")} ${TODAY.getDate()} ${MOISL[TODAY.getMonth()]}</b></span>${today && today.Bloc ? `<span>Bloc <b>${esc(today.Bloc)}</b></span>` : ""}${next ? `<span>Prochaine paie <b>${dShort(next.Date)} · dans ${days(next.Date)} jours</b></span>` : ""}`);
+set("kpis", `
+<div class="kpi"><div class="k">Reste à assigner · par mois</div><div class="v"${reste !== 0 ? ' style="color: #DA291C"' : ""}>${cad(reste)}</div><div class="s">Budget à base zéro</div></div>
+<div class="kpi"><div class="k">Heures de vol</div><div class="v">${fmt(tt.Fait)} / ${fmt(tt.Cible)} h</div>${barHtml(n0(tt.Fait) / (n0(tt.Cible) || 1), pct(n0(tt.Fait) / (n0(tt.Cible) || 1)))}</div>
+<div class="kpi"><div class="k">Calories aujourd’hui</div><div class="v">${today && today.kcal != null ? fmt(kcal) + " kcal" : "— kcal"}</div>${barHtml(kcal / 2900, pct(kcal / 2900))}</div>
+<div class="kpi"><div class="k">Habitudes · 7 jours</div><div class="v">${fmt(hab)} / ${week.length * 5 || 35}</div><div class="s">${week.length} jour${week.length > 1 ? "s" : ""} saisi${week.length > 1 ? "s" : ""}</div></div>`);
+const H = ["Gym", "140 g de protéines", "30 min d'étude IFR", "Aucune dépense impulsive", "Couché avant 23 h"];
+const extra = { "140 g de protéines": today ? `${fmt(today["Protéines (g)"])} / 140 g` : "", Gym: "" };
+set("today", H.map((k) => {
+const on = !!(today && today[k]);
+return `<label class="chk"><input type="checkbox" disabled${on ? " checked" : ""}><span${on ? ' class="done"' : ""}>${esc(k.replace("'", "’"))}</span><span class="x">${extra[k] || ""}</span></label>`;
+}).join("") + (today ? "" : `<p class="hint">Pas encore de page pour aujourd’hui dans le Journal.</p>`));
+const cards = [
+["01", "Finances", "Budget, dettes, projection", resume.Fin ? "Libre de dettes : " + dMonthYear(resume.Fin) : "", "4161ea2c4b2381c7af23ca2673897a0a"],
+["02", "Pilotage", "CPL · IFR Groupe 1 · Cargair", bar(n0(tt.Fait) / (n0(tt.Cible) || 1)) + " " + fmt(tt.Fait) + " / " + fmt(tt.Cible) + " h", "4171ea2c4b2381e99257f8b73d94c041"],
+["03", "Corps", "Gym, nutrition, habitudes", "Prise de masse" + (j.find((x) => x["Poids (lb)"]) ? " · " + fmt(j.find((x) => x["Poids (lb)"])["Poids (lb)"], 1) + " lb" : ""), "4171ea2c4b238123aef9c3068682a224"],
+["04", "Horizons", "Condo au Québec · Suisse", "Condo : environ 2029", "4171ea2c4b2381b4b5ead1e864301cda"],
+["05", "Vie", "Chloé, projets code, maison et auto, voyages, administratif", ((n) => n + (n > 1 ? " idées de dates en attente" : " idée de date en attente"))(rows("idees").filter((i) => i.Statut === "À faire").length), "4171ea2c4b238115bc35ed55f7f193fc"],
+["06", "Système", "Bases, relations, formules", "Mode d’emploi", "4171ea2c4b2381d9ad7cc6d061696f15"],
+];
+set("gal", cards.map(([n, nm, ln, st, id]) => `<a class="card" target="_blank" rel="noopener" href="https://www.notion.so/${id}"><div class="cv"${n === "06" ? ' style="background: #111111"' : ""}><span>${n}</span></div><div class="bd"><div class="nm">${nm}</div><div class="ln">${esc(ln)}</div><span class="bar"${n === "06" ? ' style="color: #6B6B6B"' : ""}>${esc(st)}</span></div></a>`).join(""));
+const ag = rows("agenda");
+const mon = new Date(TODAY); mon.setDate(TODAY.getDate() - ((TODAY.getDay() + 6) % 7));
+let w = "";
+for (let i = 0; i < 7; i++) {
+const d = new Date(mon); d.setDate(mon.getDate() + i);
+const ds = d.toISOString().slice(0, 10);
+const isT = ds === iso;
+const evs = ag.filter((e) => e.Date && e.Date.start.slice(0, 10) <= ds && (e.Date.end || e.Date.start).slice(0, 10) >= ds);
+const cls = (t) => (t === "Quart AC" ? "ink" : t === "Vol" || t === "Date" ? "red" : "");
+w += `<div${isT ? ' class="today"' : ""}><div class="dn"><span>${JOURS[d.getDay()]}</span>${isT ? `<b>${d.getDate()}</b>` : `<span>${d.getDate()}</span>`}</div>${evs.map((e) => `<div class="ev ${cls(e.Type)}">${esc(e["Événement"] || e.Type)}</div>`).join("")}</div>`;
+}
+set("week", w);
+set("weekHint", ag.length ? "" : "L’Agenda est vide pour l’instant : ajoute tes quarts et tes vols dans la base Agenda.");
+});
+</script>
+
+</body></html>

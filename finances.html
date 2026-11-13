@@ -1,0 +1,160 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Finances</title><link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;800&amp;display=swap" rel="stylesheet"><link rel="stylesheet" href="c.css"><script src="lib.js"></script></head><body class="p-finances">
+<div class="nt">
+<main class="main">
+<div class="cover">
+<div class="lab">Finances<br>Budget à base zéro · dettes · projection</div>
+<div class="big">01</div>
+</div>
+<div class="page">
+<div class="icon"><i></i></div>
+<h1 class="t">Finances</h1>
+<div class="props" id="props"></div>
+<div class="cols" style="margin-top: 28px" id="kpis"></div>
+<div class="co" style="margin-top: 32px"><span class="m"></span><div><b>La règle.</b> Chaque dollar reçoit un poste avant d’être dépensé. Quand « Reste à assigner » affiche 0, le mois est prêt.</div></div>
+<h2 id="budgetTitle">Budget</h2>
+<div class="hint">Base Budget · une ligne par poste · Réel = somme des Transactions liées ce mois-ci</div>
+<div class="vh"><span class="on">Ce mois</span><span>Par catégorie</span><span>Par paie</span></div>
+<div class="scroll">
+<table class="tb">
+<thead><tr><th>Poste</th><th class="r">Par paie</th><th class="r">Prévu</th><th class="r">Réel</th><th class="r">Écart</th><th>Consommé</th></tr></thead>
+<tbody id="budget"></tbody>
+</table>
+</div>
+<h2>Dettes</h2>
+<div class="hint">Base Dettes · solde et date de fin calculés par formule à partir du taux, du paiement et des changements prévus</div>
+<div class="scroll">
+<table class="tb">
+<thead><tr><th>Créancier</th><th class="r">Solde initial</th><th class="r">Solde aujourd’hui</th><th class="r">Taux</th><th class="r">Paiement</th><th>Réglée le</th><th>Progrès</th></tr></thead>
+<tbody id="dettes"></tbody>
+</table>
+</div>
+<div class="co" style="margin-top: 16px"><span class="m"></span><div id="jalonsDette"></div></div>
+<h2>Projection</h2>
+<div class="hint">Base Projection · une ligne = un scénario · change la date cible ou le paiement dans Notion, la résultante suit</div>
+<div class="cols" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px; margin-top: 14px">
+<div>
+<div style="display: grid; grid-template-columns: 140px 1fr; row-gap: 12px; align-items: center; font-size: 14px">
+<span style="color: #6B6B6B">Scénario</span><span style="display: flex; gap: 6px; flex-wrap: wrap" id="scen"></span>
+<span style="color: #6B6B6B">Date cible</span><span><span class="pill" id="pDate"></span></span>
+<span style="color: #6B6B6B">Première paie</span><span id="pFirst"></span>
+</div>
+<div id="chart" style="margin-top: 24px"></div>
+</div>
+<div class="res" id="pRes"></div>
+</div>
+<h2>Transactions</h2>
+<div class="vh" style="margin: 0"><span class="on">Récentes</span><span>Par compte</span><span>Impulsives</span></div>
+<div class="scroll">
+<table class="tb">
+<thead><tr><th>Date</th><th>Libellé</th><th>Type</th><th>Compte</th><th class="r">Montant</th></tr></thead>
+<tbody id="tx"></tbody>
+</table>
+</div>
+<div class="cols" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px">
+<section>
+<h2>Paies à venir</h2>
+<div class="res" id="paies"></div>
+<div class="co" style="margin-top: 14px" id="trois"></div>
+</section>
+<section>
+<h2>Comptes</h2>
+<div class="cols" style="grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px">
+<div class="acc"><div class="nm">Wealthsimple</div><div class="ln">Paie, factures, carte principale</div></div>
+<div class="acc"><div class="nm">KOHO</div><div class="ln">Perso · 150 CAD par paie</div></div>
+<div class="acc"><div class="nm">Wealthsimple CELI</div><div class="ln">Fonds d’urgence, puis REER</div></div>
+<div class="acc"><div class="nm">Desjardins</div><div class="ln">Marge étudiante</div></div>
+<div class="acc"><div class="nm">RBC</div><div class="ln">Prêt de consolidation</div></div>
+</div>
+</section>
+</div>
+</div>
+</main>
+</div>
+<script>
+__run(function () {
+const budget = rows("budget");
+const dettes = rows("dettes");
+const paies = rows("paies").filter((p) => dt(p.Date) && days(p.Date) >= 0).sort((a, b) => dt(a.Date) - dt(b.Date));
+const resume = rows("resume")[0] || {};
+const cats = rows("categories").sort((a, b) => n0(a.Ordre) - n0(b.Ordre));
+const reste = budget.reduce((s, b) => s + n0(b["Net mensuel"]), 0);
+const parPaie = (budget.find((b) => b["Catégorie"] === "Revenu") || {})["Aux 2 semaines"];
+set("props", `<span>Paie <b>aux 14 jours · ${cad(parPaie)} net</b></span><span>Compte principal <b>Wealthsimple</b></span><span>Perso <b>KOHO</b></span>`);
+const next = paies[0];
+const finDettes = dettes.filter((d) => d["Réglé le"]).sort((a, b) => dt(a["Réglé le"]) - dt(b["Réglé le"]));
+set("kpis", `
+<div class="kpi"><div class="k">Reste à assigner · par mois</div><div class="v"${reste !== 0 ? ' style="color: #DA291C"' : ""}>${cad(reste)}</div><div class="s">${reste === 0 ? "Chaque dollar a son poste" : "Somme du Net mensuel du Budget"}</div></div>
+<div class="kpi"><div class="k">Dettes totales · ${dShort(TODAY.toISOString())}</div><div class="v">${cad(resume.Somme ?? dettes.reduce((s, d) => s + n0(d["Solde aujourd'hui"]), 0))}</div><div class="s">${dettes.map((d) => esc(d.Dette.replace(/^(Prêt|Marge) /, "")) + " " + fmt(d["Solde aujourd'hui"])).join(" · ")}</div></div>
+<div class="kpi"><div class="k">Prochaine paie</div><div class="v">${next ? dShort(next.Date) : "—"}</div><div class="s">${next ? "Dans " + days(next.Date) + " jours" + (paies[1] ? " · puis " + dShort(paies[1].Date) : "") : ""}</div></div>
+<div class="kpi"><div class="k">Libre de dettes</div><div class="v">${resume.Fin ? dMonthYear(resume.Fin) : "—"}</div><div class="s">${finDettes.slice(0, 2).map((d) => esc(d.Dette.replace(/^(Prêt|Marge) /, "")) + " " + dShort(d["Réglé le"]).replace(/^\d+ /, "") + " " + dt(d["Réglé le"]).getFullYear()).join(" · ")}</div></div>`);
+set("budgetTitle", "Budget · " + MOISL[TODAY.getMonth()] + " " + TODAY.getFullYear());
+let h = "";
+for (const c of cats) {
+const items = budget.filter((b) => b["Catégorie"] === c.Type);
+if (!items.length) continue;
+const isRev = c.Type === "Revenu";
+const prevu = items.reduce((s, b) => s + n0(b.Mensuel), 0);
+const reel = items.reduce((s, b) => s + Math.abs(n0(b["Réel ce mois"])), 0);
+h += `<tr class="g"><td>${esc(c["Catégorie"])}</td><td class="r">${fmt(c["Total paie"])}</td><td class="r">${fmt(prevu)}</td><td class="r">${fmt(reel)}</td><td class="r">${isRev ? "" : fmt(prevu - reel)}</td><td></td></tr>`;
+for (const b of items.sort((a, z) => n0(z.Mensuel) - n0(a.Mensuel))) {
+const r = Math.abs(n0(b["Réel ce mois"]));
+const p = n0(b.Mensuel) ? r / n0(b.Mensuel) : 0;
+h += `<tr><td>${esc(b.Poste)}</td><td class="r">${fmt(b["Aux 2 semaines"])}</td><td class="r">${fmt(b.Mensuel)}</td><td class="r">${fmt(r)}</td><td class="r">${isRev ? "" : fmt(n0(b.Mensuel) - r)}</td><td>${barHtml(p, pct(p), 10)}</td></tr>`;
+}
+}
+h += `<tr class="t"><td>Reste à assigner</td><td></td><td class="r" style="color: #DA291C">${fmt(reste)}</td><td></td><td></td><td></td></tr>`;
+set("budget", h);
+let tot = 0, tot0 = 0;
+set("dettes", dettes.sort((a, b) => dt(a["Réglé le"]) - dt(b["Réglé le"])).map((d) => {
+const s0 = n0(d.Solde), s = n0(d["Solde aujourd'hui"]);
+tot += s; tot0 += s0;
+const p = s0 ? 1 - s / s0 : 0;
+const per = n0(d["Périodes par an"]) === 26 ? " / paie" : " / mois";
+return `<tr><td><b>${esc(d.Dette)}</b></td><td class="r">${fmt(s0)}</td><td class="r">${fmt(s)}</td><td class="r">${fmt(n0(d.Taux) * 100, 1)} %</td><td class="r">${fmt(d["Paiement effectif"])}${per}</td><td>${dLong(d["Réglé le"])}</td><td>${barHtml(p, pct(p), 10)}</td></tr>`;
+}).join("") + `<tr class="t"><td>Total</td><td class="r">${fmt(tot0)}</td><td class="r">${fmt(tot)}</td><td></td><td></td><td>${resume.Fin ? dLong(resume.Fin) : ""}</td><td></td></tr>`);
+set("jalonsDette", finDettes.map((d) => `<b>${esc(d.Dette)}</b> réglé le ${dLong(d["Réglé le"])}`).join(" · ") + (resume.Fin ? `. <b>Libre de dettes le ${dLong(resume.Fin)}.</b>` : ""));
+const sc = rows("projection").sort((a, b) => String(a["Scénario"]).localeCompare(String(b["Scénario"]), "fr"));
+let cur = 0;
+function drawProj() {
+const p = sc[cur];
+if (!p) { set("pRes", '<p class="hint">Aucun scénario.</p>'); return; }
+set("scen", sc.map((s, i) => `<button class="btn${i === cur ? " on" : ""}" type="button" data-i="${i}">${esc(s["Scénario"])}</button>`).join(""));
+document.querySelectorAll("#scen button").forEach((b) => (b.onclick = () => { cur = +b.dataset.i; drawProj(); }));
+set("pDate", dLong(p["Date cible"]));
+set("pFirst", dLong(p["Première paie"]));
+set("pRes", `
+<div><span>Paies d’ici la date</span><span>${fmt(p["Paies d'ici la date"])}</span></div>
+<div><span>Paiement par paie</span><span>${cad(p["Paiement par paie"])}</span></div>
+<div><span>Versé d’ici la date</span><span>${cad(p["Versé d'ici la date"])}</span></div>
+<div><span>Dont intérêts</span><span>${cad(p["Dont intérêts"])}</span></div>
+<div><span>Réglé le</span><span>${dLong(p["Réglé le"])}</span></div>
+<div class="big"><span>Restant à la date</span><span style="color: #DA291C">${cad(p["Restant à la date"])}</span></div>
+<p class="hint" style="margin: 10px 0 0">Formule : solde × (1 + t)^n − paiement × ((1 + t)^n − 1) / t, avec t = taux / 26.</p>`);
+const t = n0(p.Taux) / 26, P = n0(p["Paiement par paie"]);
+let b = n0(p.Solde); const pts = [b];
+for (let i = 0; i < 400 && b > 0; i++) { b = b * (1 + t) - P; pts.push(Math.max(0, b)); }
+const n = pts.length - 1, W = 460, X = (i) => (i / Math.max(n, 1)) * W, Y = (v) => 20 + (1 - v / pts[0]) * 140;
+const nc = n0(p["Paies d'ici la date"]), xc = X(Math.min(nc, n));
+const d1 = dt(p["Première paie"]);
+const end = d1 ? new Date(d1.getTime() + n * 14 * 864e5) : null;
+set("chart", `<svg viewBox="0 0 ${W} 190" role="img" aria-label="Solde projeté du scénario ${esc(p["Scénario"])}" style="width: 100%">
+<line x1="0" y1="160" x2="${W}" y2="160" stroke="#111"></line>
+<line x1="0" y1="20" x2="${W}" y2="20" stroke="#E6E6E3"></line>
+<line x1="0" y1="90" x2="${W}" y2="90" stroke="#E6E6E3"></line>
+<polyline fill="none" stroke="#111" stroke-width="2" points="${pts.map((v, i) => X(i).toFixed(1) + "," + Y(v).toFixed(1)).join(" ")}"></polyline>
+${nc <= n ? `<line x1="${xc}" y1="10" x2="${xc}" y2="160" stroke="#DA291C" stroke-width="1.5" stroke-dasharray="3 3"></line><rect x="${xc - 4}" y="${Y(pts[Math.min(nc, n)]) - 4}" width="8" height="8" fill="#DA291C"></rect><text x="${Math.max(xc - 4, 60)}" y="12" font-size="11" fill="#DA291C" text-anchor="end">${dShort(p["Date cible"])} ${dt(p["Date cible"]).getFullYear()}</text>` : ""}
+<text x="0" y="180" font-size="11" fill="#6B6B6B">${d1 ? MOIS[d1.getMonth()] + " " + d1.getFullYear() : ""}</text>
+<text x="${W}" y="180" font-size="11" fill="#6B6B6B" text-anchor="end">${end ? MOIS[end.getMonth()] + " " + end.getFullYear() : ""}</text>
+<text x="4" y="14" font-size="11" fill="#6B6B6B">${fmt(pts[0])}</text>
+</svg>`);
+}
+drawProj();
+const tx = rows("transactions").filter((x) => dt(x.Date)).sort((a, b) => dt(b.Date) - dt(a.Date)).slice(0, 8);
+set("tx", tx.length ? tx.map((x) => `<tr><td>${dShort(x.Date)}</td><td>${esc(x["Libellé"])}${x.Impulsive ? ' <span class="tag red">impulsive</span>' : ""}</td><td>${tag(x.Type, x.Type === "Revenu" ? "ink" : "")}</td><td>${esc(x.Compte)}</td><td class="r">${n0(x.Montant) > 0 ? "+" : ""}${fmt(x.Montant, 2)}</td></tr>`).join("") : `<tr><td colspan="5" class="hint">Aucune transaction.</td></tr>`);
+set("paies", paies.slice(0, 4).map((p) => `<div><span>${JOURS[dt(p.Date).getDay()].replace(".", "")}. ${dLong(p.Date)}${p["3e paie du mois"] ? ' <span class="tag red">3e paie</span>' : ""}</span><span>${fmt(p.Montant)}</span></div>`).join(""));
+const t3 = paies.find((p) => p["3e paie du mois"]);
+set("trois", t3 ? `<span class="m"></span><div>${MOISL[dt(t3.Date).getMonth()][0].toUpperCase() + MOISL[dt(t3.Date).getMonth()].slice(1)} ${dt(t3.Date).getFullYear()} a 3 paies (la 3e le ${dShort(t3.Date)}). Suggestion : la 3e au complet sur la dette.</div>` : "");
+if (!t3) $("trois").style.display = "none";
+});
+</script>
+</body></html>

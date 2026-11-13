@@ -1,0 +1,87 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Système</title><link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;800&amp;display=swap" rel="stylesheet"><link rel="stylesheet" href="c.css"><script src="lib.js"></script></head><body class="p-systeme">
+<div class="nt">
+<main class="main">
+<div class="cover">
+<div class="lab">Système<br><span style="color: #9C9C9C">Comment tout tient ensemble</span></div>
+<div class="big">06</div>
+</div>
+<div class="page">
+<div class="icon"><i></i></div>
+<h1 class="t">Système</h1>
+<p class="lead">Une donnée se saisit une seule fois, dans une seule base. Toutes les pages ne sont que des vues de ces bases.</p>
+<h2>Bases de données</h2>
+<div class="scroll">
+<table class="tb">
+<thead><tr><th>Base</th><th>Propriétés clés</th><th>Reliée à</th><th>Vue dans</th></tr></thead>
+<tbody>
+<tr><td><b>Transactions</b></td><td><span class="tag">Date</span><span class="tag">Montant</span><span class="tag">Compte</span><span class="tag">Impulsive</span></td><td>Budget, Coûts</td><td>Finances</td></tr>
+<tr><td><b>Budget</b></td><td><span class="tag">Catégorie</span><span class="tag">Mensuel</span><span class="tag">Aux 2 semaines</span><span class="tag">Réel ce mois · rollup</span></td><td>Transactions, Catégories</td><td>Finances, Accueil</td></tr>
+<tr><td><b>Dettes</b></td><td><span class="tag">Solde</span><span class="tag">Taux</span><span class="tag">Paiement</span><span class="tag">Réglé le · formule</span></td><td>Résumé, Projection</td><td>Finances, Accueil</td></tr>
+<tr><td><b>Paies</b></td><td><span class="tag">Date</span><span class="tag">Montant</span><span class="tag">3e paie du mois</span></td><td></td><td>Finances, Accueil</td></tr>
+<tr><td><b>Vols</b></td><td><span class="tag">Durée</span><span class="tag">PIC</span><span class="tag">Voyage</span><span class="tag">Nuit</span><span class="tag">Inst.</span></td><td>Exigences</td><td>Pilotage</td></tr>
+<tr><td><b>Exigences</b></td><td><span class="tag">Cible</span><span class="tag">Fait · rollup</span><span class="tag">Progrès · formule</span></td><td>Vols</td><td>Pilotage, Accueil</td></tr>
+<tr><td><b>Séances</b></td><td><span class="tag">Type</span><span class="tag">Mouvement clé</span><span class="tag">Charge</span><span class="tag">Reps</span></td><td></td><td>Corps</td></tr>
+<tr><td><b>Journal</b></td><td><span class="tag">Date</span><span class="tag">kcal</span><span class="tag">Protéines</span><span class="tag">Poids</span><span class="tag">5 cases</span></td><td></td><td>Corps, Accueil, Saisie</td></tr>
+<tr><td><b>Jalons</b></td><td><span class="tag">Période</span><span class="tag">Horizon</span><span class="tag">Confiance</span></td><td></td><td>Horizons</td></tr>
+<tr><td><b>Idées</b></td><td><span class="tag">Type</span><span class="tag">Coût</span><span class="tag">Statut</span></td><td>Agenda</td><td>Vie</td></tr>
+<tr><td><b>Projets</b></td><td><span class="tag">Statut</span><span class="tag">Prochaine action</span><span class="tag">Repo</span></td><td></td><td>Vie</td></tr>
+<tr><td><b>Documents</b></td><td><span class="tag">Fichier</span><span class="tag">Catégorie</span><span class="tag">Expire</span></td><td></td><td>Vie</td></tr>
+<tr><td><b>Agenda</b></td><td><span class="tag">Date</span><span class="tag">Type</span></td><td></td><td>Accueil</td></tr>
+</tbody>
+</table>
+</div>
+<h2>Formules clés</h2>
+<div class="cols" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 32px">
+<div>
+<div style="font-weight: 600">Barre de progrès</div>
+<div class="hint">Exigences, Budget, Projection</div>
+<div class="code"><span class="c">// ■■■■■■■■□□□ 75 %</span>
+lets(
+  p, min(prop("Fait") / prop("Cible"), 1),
+  k, round(p * 11),
+  style(repeat("■", k) + repeat("□", 11 - k), "red")
+    + " " + format(round(p * 100)) + " %"
+)</div>
+</div>
+<div>
+<div style="font-weight: 600">Projection de dette à une date</div>
+<div class="hint">Projection · date cible et paiement par paie</div>
+<div class="code"><span class="c">// solde restant à la date cible</span>
+lets(
+  t, prop("Taux") / 26,
+  n, paies entre la 1re paie et la date cible,
+  g, pow(1 + t, n),
+  max(prop("Solde") * g - prop("Paiement") * (g - 1) / t, 0)
+)</div>
+</div>
+</div>
+<h2>Cinq minutes par jour</h2>
+<ol class="steps">
+<li><span>Réveil</span><div>Poids, dans le Journal du jour</div><em>15 s</em></li>
+<li><span>Achat</span><div>Nouvelle Transaction, au moment même</div><em>15 s</em></li>
+<li><span>Gym</span><div>Duplique la dernière séance du même type, change le chiffre</div><em>1 min</em></li>
+<li><span>Vol</span><div>Nouvelle ligne Vols, ou import ForeFlight une fois par semaine</div><em>1 min</em></li>
+<li><span>Soir</span><div>Total kcal et protéines, cinq cases</div><em>2 min</em></li>
+<li><span>Jour de paie</span><div>Assigner chaque dollar jusqu’à « Reste à assigner » = 0</div><em>10 min · aux 14 jours</em></li>
+</ol>
+<h2>Appareils</h2>
+<div class="cols">
+<div class="dev"><div class="nm">Mac</div><div class="ln">Pages complètes, revue de paie, import ForeFlight.</div></div>
+<div class="dev"><div class="nm">iPhone</div><div class="ln">Page Saisie en widget sur l’écran d’accueil. Rien d’autre.</div></div>
+<div class="dev"><div class="nm">iPad</div><div class="ln">Accueil et Pilotage en écran partagé avec ForeFlight.</div></div>
+<div class="dev"><div class="nm">Rappels</div><div class="ln">Reste l’outil des alertes. Notion ne notifie pas, il mesure.</div></div>
+</div>
+<h2>Comment le haut des pages est fait</h2>
+<ol class="ord">
+<li><b>1</b><div><b>Tu saisis dans Notion</b>, dans les bases au bas de chaque page.</div></li>
+<li><b>2</b><div><b>La connexion « Life Dashboard »</b> lit ces bases, en lecture seulement.</div></li>
+<li><b>3</b><div><b>Une fonction Supabase</b> (projet logbook) renvoie les chiffres, protégée par une clé.</div></li>
+<li><b>4</b><div><b>La page sur GitHub</b> (PokPokPapi/life) dessine le design avec ces chiffres. Elle ne contient aucune donnée.</div></li>
+<li><b>5</b><div><b>Notion l’affiche en embed</b> en haut de chaque page. Recharge la page pour voir tes derniers ajouts.</div></li>
+</ol>
+</div>
+</main>
+</div>
+<script>__run(function () {});</script>
+
+</body></html>
